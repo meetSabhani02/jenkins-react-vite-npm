@@ -19,7 +19,9 @@ git commit -m "Add complete Jenkins CI/CD configuration
 - Add build.sh with enhanced build process
 - Add GitHub webhook setup instructions
 - Add comprehensive documentation
-- Configure for repository: meetSabhani02/jenkins-react-vite-npm"
+- Add deployment checklist and test scripts
+- Configure for repository: meetSabhani02/jenkins-react-vite-npm
+- Configure for Jenkins URL: https://jenkins-react-vite-npm.onrender.com/"
 
 echo 🚀 Pushing to GitHub...
 git push origin main
