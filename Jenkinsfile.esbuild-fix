@@ -1,0 +1,128 @@
+pipeline {
+    agent any
+    
+    environment {
+        NODE_OPTIONS = "--max-old-space-size=2048"
+        NPM_CONFIG_PROGRESS = "false"
+        NPM_CONFIG_AUDIT = "false"
+        NPM_CONFIG_FUND = "false"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+        }
+        
+        stage('Setup Environment') {
+            steps {
+                echo 'Setting up build environment...'
+                sh '''
+                    echo "🔍 Environment check:"
+                    node --version
+                    npm --version
+                    whoami
+                    pwd
+                    ls -la
+                    
+                    echo "🧹 Cleaning workspace..."
+                    rm -rf node_modules package-lock.json dist artifacts || true
+                '''
+            }
+        }
+        
+        stage('Install Dependencies - Alternative Method') {
+            steps {
+                echo 'Installing dependencies with esbuild workaround...'
+                timeout(time: 20, unit: 'MINUTES') {
+                    script {
+                        def installSuccess = false
+                        def attempts = 0
+                        def maxAttempts = 3
+                        
+                        while (!installSuccess && attempts < maxAttempts) {
+                            attempts++
+                            echo "Attempt ${attempts}/${maxAttempts}"
+                            
+                            try {
+                                sh '''
+                                    # Method 1: Try with fresh cache
+                                    npm cache clean --force
+                                    rm -rf node_modules package-lock.json || true
+                                    
+                                    # Install without esbuild first
+                                    echo "Installing dependencies without esbuild..."
+                                    npm install --no-optional --ignore-scripts
+                                    
+                                    # Then manually handle esbuild
+                                    echo "Installing esbuild separately..."
+                                    npm install esbuild --ignore-scripts
+                                    
+                                    # Run install scripts manually with retries
+                                    echo "Running esbuild install script manually..."
+                                    cd node_modules/esbuild
+                                    node install.js || {
+                                        echo "Direct install.js failed, trying alternative..."
+                                        sleep 5
+                                        sync
+                                        node install.js
+                                    }
+                                    cd ../..
+                                    
+                                    # Verify installation
+                                    echo "Testing esbuild..."
+                                    ./node_modules/.bin/esbuild --version
+                                '''
+                                installSuccess = true
+                            } catch (Exception e) {
+                                echo "Attempt ${attempts} failed: ${e.getMessage()}"
+                                if (attempts < maxAttempts) {
+                                    sleep(30) // Wait 30 seconds before retry
+                                }
+                            }
+                        }
+                        
+                        if (!installSuccess) {
+                            error("Failed to install dependencies after ${maxAttempts} attempts")
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Building the application...'
+                timeout(time: 10, unit: 'MINUTES') {
+                    sh '''
+                        echo "🏗️ Starting build..."
+                        npm run build
+                        
+                        echo "✅ Build completed"
+                        ls -la dist/
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline completed'
+        }
+        failure {
+            echo 'Pipeline failed - check logs above'
+            sh '''
+                echo "=== Debug Info ==="
+                ls -la node_modules/.bin/ | head -10 || true
+                ls -la node_modules/esbuild/ || true
+                cat /var/jenkins_home/.npm/_logs/*debug*.log | tail -50 || true
+            '''
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+    }
+}

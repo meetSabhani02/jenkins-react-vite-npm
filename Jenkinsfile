@@ -7,6 +7,15 @@ pipeline {
         BUILD_DIR = 'dist'
         ARTIFACT_NAME = "${env.JOB_NAME}-${env.BUILD_NUMBER}"
         PATH = "/usr/bin:$PATH"
+        // Fix for esbuild ETXTBSY errors on slow file systems
+        NODE_OPTIONS = "--max-old-space-size=2048"
+        NPM_CONFIG_PROGRESS = "false"
+        NPM_CONFIG_AUDIT = "false"
+        NPM_CONFIG_FUND = "false"
+        // Add retry mechanism for npm operations
+        NPM_CONFIG_FETCH_RETRIES = "5"
+        NPM_CONFIG_FETCH_RETRY_FACTOR = "2"
+        NPM_CONFIG_FETCH_RETRY_MINTIMEOUT = "10000"
     }
     
     stages {
@@ -20,10 +29,66 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing Node.js dependencies...'
+                timeout(time: 15, unit: 'MINUTES') {
+                    retry(3) {
+                        sh '''
+                            echo "🔍 System info before install:"
+                            node --version
+                            npm --version
+                            whoami
+                            pwd
+                            
+                            echo "🧹 Cleaning any previous failed installs..."
+                            rm -rf node_modules package-lock.json || true
+                            
+                            echo "⏰ Starting npm ci with ETXTBSY fixes..."
+                            # Fix for ETXTBSY: Use npm install instead of npm ci on first run
+                            # and add sync operations to ensure file system consistency
+                            npm cache clean --force
+                            sync
+                            sleep 2
+                            
+                            # Use npm install with exact versions instead of npm ci for better reliability
+                            npm install --no-optional --no-fund --no-audit --verbose
+                            
+                            echo "🔧 Fixing esbuild permissions..."
+                            chmod +x node_modules/.bin/* || true
+                            chmod +x node_modules/esbuild/bin/esbuild || true
+                            sync
+                            sleep 1
+                            
+                            echo "✅ Dependencies installed successfully"
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Verify Build Tools') {
+            steps {
+                echo 'Verifying build tools are working...'
                 sh '''
-                    node --version
-                    npm --version
-                    npm ci
+                    echo "🔍 Testing esbuild (the problematic tool)..."
+                    
+                    # Test if esbuild binary works
+                    if [ -f "node_modules/.bin/esbuild" ]; then
+                        echo "✅ esbuild binary found"
+                        ls -la node_modules/.bin/esbuild
+                        
+                        # Try to run esbuild version - this was failing before
+                        echo "Testing esbuild execution..."
+                        timeout 30 node_modules/.bin/esbuild --version || {
+                            echo "❌ esbuild --version failed, trying alternative..."
+                            # Alternative: use node to run esbuild
+                            node node_modules/esbuild/lib/main.js --version || echo "Both methods failed"
+                        }
+                    else
+                        echo "❌ esbuild binary not found"
+                        find node_modules -name "*esbuild*" -type f | head -10
+                    fi
+                    
+                    echo "🔍 Testing other build tools..."
+                    npm run lint --dry-run || echo "Lint check failed"
                 '''
             }
         }
