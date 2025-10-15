@@ -4,6 +4,10 @@ FROM jenkins/jenkins:lts-jdk17
 # Skip setup wizard if you want to preconfigure (optional)
 ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
 
+# Install Jenkins plugins
+COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
+
 # Install common tools used by pipelines (zip, node, npm, git)
 USER root
 
@@ -20,7 +24,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Switch back to jenkins user
 USER jenkins
 
-# (Optional) copy predefined Jenkins config or plugins bootstrap if you have them
-# COPY jenkins/ /var/jenkins_home/  # only if you want seeded config
+# Copy Jenkins configuration files
+COPY jenkins-config/ /var/jenkins_home/
 
 EXPOSE 8080 50000

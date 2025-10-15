@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Jenkins and Build artifacts
+artifacts/
+*.zip
+!setup-*.sh
+!build.sh
+!health-check.sh
+
+# Jenkins home (if running locally)
+jenkins_home/
+.jenkins/
+
+# Environment files
+.env
+.env.local
+.env.production
