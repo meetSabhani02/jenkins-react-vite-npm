@@ -32,3 +32,6 @@ USER jenkins
 COPY jenkins-config/ /var/jenkins_home/
 
 EXPOSE 8080 50000
+
+# Add health check for Render deployment monitoring
+HEALTHCHECK CMD curl -f http://localhost:8080/login || exit 1
