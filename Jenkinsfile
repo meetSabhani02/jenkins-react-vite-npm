@@ -102,10 +102,19 @@ pipeline {
         
         stage('Build & Package') {
             steps {
-                echo 'Building and packaging the React Vite application...'
+                echo 'Building and packaging with Jenkins direct access...'
                 sh '''
-                    chmod +x build.sh
-                    ./build.sh
+                    echo "🔧 Making build scripts executable..."
+                    chmod +x build.sh build-jenkins-direct.sh
+                    
+                    echo "🚀 Building with direct Jenkins URLs (no external storage needed)..."
+                    ./build-jenkins-direct.sh
+                    
+                    echo ""
+                    echo "✅ Build complete! Artifacts will be accessible at:"
+                    echo "📥 Main ZIP: ${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/artifact/artifacts/*.zip"
+                    echo "📄 Build Page: ${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/artifact/artifacts/index.html"
+                    echo "📊 Jenkins Build: ${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/"
                 '''
             }
         }
@@ -128,9 +137,41 @@ pipeline {
         
         stage('Archive Artifacts') {
             steps {
-                echo 'Archiving build artifacts...'
-                archiveArtifacts artifacts: 'artifacts/*.zip', fingerprint: true
-                archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
+                echo 'Archiving build artifacts for direct access...'
+                script {
+                    // Archive all build artifacts
+                    archiveArtifacts artifacts: 'artifacts/*.zip', fingerprint: true
+                    archiveArtifacts artifacts: 'artifacts/*.json', fingerprint: true  
+                    archiveArtifacts artifacts: 'artifacts/*.html', fingerprint: true
+                    archiveArtifacts artifacts: 'artifacts/*.txt', fingerprint: true
+                    archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
+                    
+                    // Display direct access URLs
+                    def jenkinsUrl = env.JENKINS_URL ?: 'https://your-jenkins.onrender.com'
+                    def jobName = env.JOB_NAME ?: 'jenkins-react-vite-npm-pipeline'
+                    def buildNumber = env.BUILD_NUMBER ?: 'unknown'
+                    
+                    echo ""
+                    echo "🎉 Build Artifacts Archived Successfully!"
+                    echo "========================================"
+                    echo ""
+                    echo "🌐 Direct Access URLs (no external storage needed):"
+                    echo ""
+                    echo "📥 ZIP Downloads:"
+                    echo "   ${jenkinsUrl}/job/${jobName}/${buildNumber}/artifact/artifacts/"
+                    echo ""
+                    echo "📄 Build Info Page:"
+                    echo "   ${jenkinsUrl}/job/${jobName}/${buildNumber}/artifact/artifacts/index.html"
+                    echo ""
+                    echo "📋 Build Metadata:"
+                    echo "   ${jenkinsUrl}/job/${jobName}/${buildNumber}/artifact/artifacts/build-info.json"
+                    echo ""
+                    echo "📊 Full Build Details:"
+                    echo "   ${jenkinsUrl}/job/${jobName}/${buildNumber}/"
+                    echo ""
+                    echo "✅ All files are directly accessible via Jenkins!"
+                    echo "ℹ️  Share these URLs with your team - no authentication needed for artifacts"
+                }
             }
         }
     }
