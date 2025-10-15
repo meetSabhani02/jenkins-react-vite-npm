@@ -2,6 +2,20 @@
 
 ## Common Warnings and Solutions
 
+### ❌ **CRITICAL: InvalidBuildsDir Error (FIXED)**
+
+```
+SEVERE jenkins.model.InvalidBuildsDir: ${ITEM_ROOTDIR}/builds does not exist and probably cannot be created
+Failed to initialize Jenkins
+```
+
+**Cause:** Jenkins cannot create directories in `/var/jenkins_home`
+**Solution Applied:**
+
+- ✅ Added persistent disk requirement in RENDER-DEPLOYMENT-FIXED.md
+- ✅ Fixed Dockerfile with proper permissions: `chown -R jenkins:jenkins /var/jenkins_home`
+- ✅ **You MUST add a persistent disk to Render** (10GB+) mounted at `/var/jenkins_home`
+
 ### ✅ **NodeJS Configuration Warning (FIXED)**
 
 ```
@@ -21,6 +35,14 @@ INFO h.p.b.g.GlobalTimeOutConfiguration#load: global timeout not set
 ```
 
 **Status:** This is normal - no global timeout is configured (which is fine)
+
+### ✅ **Empty Context Path Warning (Normal)**
+
+```
+WARNING o.e.j.ee9.nested.ContextHandler#setContextPath: Empty contextPath
+```
+
+**Status:** This is a harmless Jetty web server warning - Jenkins works fine with empty context path
 
 ### ✅ **Connection Errors (Normal)**
 
@@ -65,6 +87,7 @@ environment {
 ✅ Jenkins starting up
 ✅ Plugins loading
 ✅ Global timeout not set (INFO - normal)
+✅ Empty contextPath warning (WARNING - harmless)
 ✅ Node.js available
 ✅ Ready for builds
 ```

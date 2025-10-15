@@ -21,10 +21,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y nodejs \
   && npm install -g pnpm
 
+# Ensure the Jenkins home directory exists and is owned by the jenkins user
+# This is CRITICAL for Render persistent disk compatibility
+RUN mkdir -p /var/jenkins_home && chown -R jenkins:jenkins /var/jenkins_home
+
 # Switch back to jenkins user
 USER jenkins
 
-# Copy Jenkins configuration files
+# Copy Jenkins configuration files (optional pre-configuration)
 COPY jenkins-config/ /var/jenkins_home/
 
 EXPOSE 8080 50000

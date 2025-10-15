@@ -11,17 +11,15 @@ echo 📦 Adding all Jenkins configuration files...
 git add .
 
 echo 📝 Committing changes...
-git commit -m "Add complete Jenkins CI/CD configuration + Fix NodeJS warnings
+git commit -m "CRITICAL FIX: Jenkins InvalidBuildsDir error + persistent disk support
 
-- Add Jenkinsfile with complete pipeline (fixed NodeJS tool config)
-- Add Dockerfile with Jenkins and Node.js setup  
-- Add plugins.txt with required Jenkins plugins
-- Add build.sh with enhanced build process
-- Add GitHub webhook setup instructions
-- Add comprehensive documentation and troubleshooting guide
-- Fix NodeJS configuration warnings
-- Configure for repository: meetSabhani02/jenkins-react-vite-npm
-- Configure for Jenkins URL: https://jenkins-react-vite-npm.onrender.com/"
+- Fix Dockerfile: Add proper /var/jenkins_home permissions (jenkins:jenkins)
+- Add RENDER-DEPLOYMENT-FIXED.md with persistent disk requirements
+- Add CRITICAL-FIX.md with step-by-step solution
+- Update troubleshooting documentation
+- MANDATORY: Persistent disk (10GB+) must be added in Render at /var/jenkins_home
+- This fixes: SEVERE jenkins.model.InvalidBuildsDir crashes
+- Jenkins will now start successfully on Render"
 
 echo 🚀 Pushing to GitHub...
 git push origin main
