@@ -1,15 +1,12 @@
 pipeline {
     agent any
     
-    tools {
-        nodejs 'NodeJS-20'
-    }
-    
     environment {
         // Define environment variables
         NODE_VERSION = '20'
         BUILD_DIR = 'dist'
         ARTIFACT_NAME = "${env.JOB_NAME}-${env.BUILD_NUMBER}"
+        PATH = "/usr/bin:$PATH"
     }
     
     stages {

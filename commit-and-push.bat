@@ -11,15 +11,15 @@ echo 📦 Adding all Jenkins configuration files...
 git add .
 
 echo 📝 Committing changes...
-git commit -m "Add complete Jenkins CI/CD configuration
+git commit -m "Add complete Jenkins CI/CD configuration + Fix NodeJS warnings
 
-- Add Jenkinsfile with complete pipeline
+- Add Jenkinsfile with complete pipeline (fixed NodeJS tool config)
 - Add Dockerfile with Jenkins and Node.js setup  
 - Add plugins.txt with required Jenkins plugins
 - Add build.sh with enhanced build process
 - Add GitHub webhook setup instructions
-- Add comprehensive documentation
-- Add deployment checklist and test scripts
+- Add comprehensive documentation and troubleshooting guide
+- Fix NodeJS configuration warnings
 - Configure for repository: meetSabhani02/jenkins-react-vite-npm
 - Configure for Jenkins URL: https://jenkins-react-vite-npm.onrender.com/"
 
